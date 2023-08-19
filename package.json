@@ -1,0 +1,26 @@
+{
+  "name": "column-movement",
+  "version": "1.0.0",
+  "description": "Analyze the movement of columns from one csv to another.",
+  "main": "column-movement.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jimkang/column-movement.git"
+  },
+  "keywords": [],
+  "author": "Jim Kang",
+  "license": "Polyform Noncommercial License 1.0",
+  "bugs": {
+    "url": "https://github.com/jimkang/column-movement/issues"
+  },
+  "homepage": "https://github.com/jimkang/column-movement",
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "prettier": "^2.8.8"
+  },
+  "dependencies": {
+    "@jimkang/randomid": "^1.1.0",
+    "seedrandom": "^3.0.5"
+  }
+}
