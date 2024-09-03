@@ -14,9 +14,9 @@ Put two csv files in `data/` that have this format:
     some value,other value,new value
     Great value,greater value,greatest value
 
-Change the filenames in `analyze.js` correspondingly. Optionally, edit out the anonymization if you don't want the values anonymized.
+Optionally, edit out the anonymization if you don't want the values anonymized.
 
-Run `node analyze.js <optional seed used in anonymizing the values>`.
+Run `node analyze.js your-first.csv your-second.csv <optional seed used in anonymizing the values>`.
 
 You'll get output that looks like this:
 

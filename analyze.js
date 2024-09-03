@@ -3,47 +3,59 @@ var fs = require('fs');
 var seedrandom = require('seedrandom');
 var RandomId = require('@jimkang/randomid');
 
+if (process.argv.length < 4) {
+  console.log(
+    'Usage: node analyze.js <file-a.csv> <file-b.csv> [random seed for anonymous ids]'
+  );
+  process.exit();
+}
+
+const fileA = process.argv[2];
+const fileB = process.argv[3];
+
 var randomId = RandomId({
-  random: seedrandom(process.argv[2] || new Date().getTime()),
+  random: seedrandom(
+    (process.argv.length > 4 && process.argv[4]) || new Date().getTime()
+  ),
 });
 
 var anonByOrig = {};
 
-var thirdGradeRows = parseCsvAtFilePath('data/3rd-grade.csv');
-var fourthGradeRows = parseCsvAtFilePath('data/4th-grade.csv');
+var aRows = parseCsvAtFilePath(fileA);
+var bRows = parseCsvAtFilePath(fileB);
 
-var teachersByThirdGrader = {};
-var fourthGradersByTeacher = {};
-var studentsBySrcByDest = {};
+var headingsByAValue = {};
+var bValuesByHeading = {};
+var valuesBySrcByDest = {};
 
-putTeachersInDict(teachersByThirdGrader, thirdGradeRows);
-putStudentsInDict(fourthGradersByTeacher, fourthGradeRows);
+putHeadingsInDict(headingsByAValue, aRows);
+putStudentsInDict(bValuesByHeading, bRows);
 mapMotion();
 
-//console.log(teachersByThirdGrader);
-//console.log(fourthGradersByTeacher);
-console.log(studentsBySrcByDest);
+//console.log(headingsByAValue);
+//console.log(bValuesByHeading);
+console.log(valuesBySrcByDest);
 
 function mapMotion() {
-  for (let teacher in fourthGradersByTeacher) {
-    let fourthGraders = fourthGradersByTeacher[teacher];
-    var studentsBySrc = readKey({
-      dict: studentsBySrcByDest,
-      key: teacher,
+  for (let heading in bValuesByHeading) {
+    let bValues = bValuesByHeading[heading];
+    var valuesBySrc = readKey({
+      dict: valuesBySrcByDest,
+      key: heading,
       defaultVal: {},
     });
 
-    fourthGraders.forEach(putStudentInSrcList);
+    bValues.forEach(putStudentInSrcList);
   }
 
-  function putStudentInSrcList(student) {
-    let srcTeacher = teachersByThirdGrader[student];
-    let studentList = readKey({
-      dict: studentsBySrc,
-      key: srcTeacher,
+  function putStudentInSrcList(value) {
+    let srcHeading = headingsByAValue[value];
+    let valueList = readKey({
+      dict: valuesBySrc,
+      key: srcHeading,
       defaultVal: [],
     });
-    studentList.push(student);
+    valueList.push(value);
   }
 }
 
@@ -64,52 +76,52 @@ function parseCsvAtFilePath(filePath) {
 }
 
 function putStudentsInDict(dict, rows) {
-  var teachersByCol = {};
+  var headingsByCol = {};
   if (rows.length < 1) {
     return;
   }
   var headerRow = rows[0];
   for (let col = 0; col < headerRow.length; ++col) {
-    teachersByCol['' + col] = headerRow[col];
+    headingsByCol['' + col] = headerRow[col];
   }
 
   for (let rowIndex = 1; rowIndex < rows.length; ++rowIndex) {
     let row = rows[rowIndex];
     for (let colIndex = 0; colIndex < row.length; ++colIndex) {
-      const student = row[colIndex];
-      if (!student || student.length < 1) {
+      const value = row[colIndex];
+      if (!value || value.length < 1) {
         continue;
       }
-      const teacher = teachersByCol[colIndex];
-      let students = dict[teacher];
-      if (!students) {
-        students = [];
-        dict[teacher] = students;
+      const heading = headingsByCol[colIndex];
+      let values = dict[heading];
+      if (!values) {
+        values = [];
+        dict[heading] = values;
       }
-      students.push(student);
+      values.push(value);
     }
   }
 }
 
-function putTeachersInDict(dict, rows) {
-  var teachersByCol = {};
+function putHeadingsInDict(dict, rows) {
+  var headingsByCol = {};
   if (rows.length < 1) {
     return;
   }
   var headerRow = rows[0];
   for (let col = 0; col < headerRow.length; ++col) {
-    teachersByCol['' + col] = headerRow[col];
+    headingsByCol['' + col] = headerRow[col];
   }
 
   for (let rowIndex = 1; rowIndex < rows.length; ++rowIndex) {
     let row = rows[rowIndex];
     for (let colIndex = 0; colIndex < row.length; ++colIndex) {
-      const student = row[colIndex];
-      if (!student || student.length < 1) {
+      const value = row[colIndex];
+      if (!value || value.length < 1) {
         continue;
       }
-      const teacher = teachersByCol[colIndex];
-      dict[student] = teacher;
+      const heading = headingsByCol[colIndex];
+      dict[value] = heading;
     }
   }
 }
