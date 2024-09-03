@@ -1,32 +1,26 @@
 /* global process */
 var fs = require('fs');
-var seedrandom = require('seedrandom');
-var RandomId = require('@jimkang/randomid');
+var SequentialNamer = require('./sequential-namer');
 
 if (process.argv.length < 4) {
   console.log(
-    'Usage: node analyze.js <file-a.csv> <file-b.csv> [random seed for anonymous ids]'
+    'Usage: node analyze.js <file-a.csv> <file-b.csv> [--use-raw-values]'
   );
   process.exit();
 }
 
 const fileA = process.argv[2];
 const fileB = process.argv[3];
-
-var randomId = RandomId({
-  random: seedrandom(
-    (process.argv.length > 4 && process.argv[4]) || new Date().getTime()
-  ),
-});
+var useRaw = process.argv.length > 4 && process.argv[4] === '--use-raw-values';
 
 var anonByOrig = {};
-
-var aRows = parseCsvAtFilePath(fileA);
-var bRows = parseCsvAtFilePath(fileB);
-
 var headingsByAValue = {};
 var bValuesByHeading = {};
 var valuesBySrcByDest = {};
+var getNextName = SequentialNamer();
+
+var aRows = parseCsvAtFilePath(fileA);
+var bRows = parseCsvAtFilePath(fileB);
 
 putHeadingsInDict(headingsByAValue, aRows);
 putStudentsInDict(bValuesByHeading, bRows);
@@ -67,11 +61,15 @@ function parseCsvAtFilePath(filePath) {
 
   rows = rows
     .slice(0, 1)
-    .concat(rows.slice(1).map((row) => row.map(anonymize)));
+    .concat(
+      rows
+        .slice(1)
+        .map((row) => row.map((raw) => (useRaw ? raw : anonymize(raw))))
+    );
   return rows;
 
   function anonymize(orig) {
-    return readKey({ dict: anonByOrig, key: orig, defaultVal: randomId(5) });
+    return readKey({ dict: anonByOrig, key: orig, defaultVal: getNextName });
   }
 }
 
@@ -129,7 +127,11 @@ function putHeadingsInDict(dict, rows) {
 function readKey({ dict, key, defaultVal }) {
   var val = dict[key];
   if (val === undefined) {
-    val = defaultVal;
+    if (typeof defaultVal === 'function') {
+      val = defaultVal();
+    } else {
+      val = defaultVal;
+    }
     dict[key] = val;
   }
   return val;
